@@ -71,5 +71,15 @@ def return_scalar(cur, sql, params=None):
     row = cur.fetchone()
     return row[0] if row else None
 
-
+# Returns the id of the latest data snapshot
+def latest_snapshot_id():
+    sql = """ 
+        SELECT id
+        FROM data_snapshots
+        ORDER BY created_at DESC
+        LIMIT 1
+    """
+    sid = return_scalar(sql)
+    if not sid: raise RuntimeError("No data_snapshots found. Run extract first.")
+    return int(sid)
 

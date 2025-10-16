@@ -1,13 +1,12 @@
 import os
 import json
 import numpy as np
-from dotenv import load_dotenv
 from sklearn.datasets import fetch_openml
-from src.common.db import with_cursor, executemany, return_scalar
 from sklearn.model_selection import train_test_split
-from src.common.utils import sha256_bytes, numpy_uint8_to_bytes
+from src.common.db import with_cursor, executemany, return_scalar
+from src.common.utils import sha256_bytes, numpy_uint8_to_bytes, get_env_int, get_env_str, ensure_env_loaded
 
-load_dotenv()
+ensure_env_loaded()
 
 def fetch_mnist_uint8():
     mnist = fetch_openml('mnist_784', version=1, as_frame=False)
@@ -46,15 +45,15 @@ def insert_rows(snapshot_id, table_name, X, y, batch_size=5000):
 def main():
     print('[EXTRACT] start')
 
-    DATA_SOURCE = os.getenv('DATA_SOURCE', "openml: mnist_784 v1")
-    TEST_SIZE = int(os.getenv('TEST_SIZE', '10000'))
-    RANDOM_SEED = int(os.getenv('RANDOM_SEED', '42'))
+    DATA_SOURCE = get_env_str('DATA_SOURCE', "openml: mnist_784 v1")
+    TEST_SIZE = get_env_int('TEST_SIZE', 10000)
+    EXTRACT_RANDOM_SEED = get_env_int('EXTRACT_RANDOM_SEED', 42)
 
     # Get the Images & Values from mnist as uint8 types
     X, y = fetch_mnist_uint8()
 
     # Split the data into the train and test sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=TEST_SIZE, random_state=RANDOM_SEED, stratify=y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=TEST_SIZE, random_state=EXTRACT_RANDOM_SEED, stratify=y)
 
     # Compute the train and test hash for integrity
     train_hash = compute_hash(X_train, y_train)
